@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.4...3.18)
+project(svfit)
+
+# Add pybind11 submodule
+add_subdirectory(pybind11)
+
+include_directories(/afs/cern.ch/user/o/oponcet/private/analysis/HCPToTauTau/modules/extern)
+
+
+# Build your C++ class using the Makefile
+add_custom_target(build_cpp_class
+    COMMAND make -f /afs/cern.ch/user/o/oponcet/private/analysis/HCPToTauTau/modules/extern/TauAnalysis/ClassicSVfit/Makefile -C /afs/cern.ch/user/o/oponcet/private/analysis/HCPToTauTau/modules/extern/
+    COMMENT "Building C++ class with Makefile"
+)
+
+# Add the pybind11 module
+pybind11_add_module(MeasuredTauLepton pybind_wrapper.cpp)
+
+
+# Ensure that the C++ class is built before building the pybind11 module
+add_dependencies(MeasuredTauLepton build_cpp_class)
