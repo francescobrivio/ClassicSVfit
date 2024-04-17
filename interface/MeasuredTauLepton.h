@@ -22,6 +22,33 @@ namespace classic_svFit
     MeasuredTauLepton();
     MeasuredTauLepton(int, double, double, double, double, int = -1);
     MeasuredTauLepton(const MeasuredTauLepton&);
+     // Copy assignment operator
+    MeasuredTauLepton& operator=(const MeasuredTauLepton& other)
+    {
+      if (this != &other) // protect against invalid self-assignment
+      {
+        // 1: deallocate old memory
+        // No dynamic memory allocation in this class, so no deallocation needed
+
+        // 2: copy the elements (deep copy)
+        type_ = other.type_;
+        pt_ = other.pt_;
+        eta_ = other.eta_;
+        phi_ = other.phi_;
+        mass_ = other.mass_;
+        energy_ = other.energy_;
+        px_ = other.px_;
+        py_ = other.py_;
+        pz_ = other.pz_;
+        p_ = other.p_;
+        decayMode_ = other.decayMode_;
+        p4_ = other.p4_;
+        p3_ = other.p3_;
+
+        // 3: assign the new memory to the object
+      }
+      return *this;
+    }
     ~MeasuredTauLepton();
 
     /// return decay type of the tau lepton
