@@ -21,7 +21,13 @@ PYBIND11_MODULE(pybind_wrapper, m) {
         .def("setMaxObjFunctionCalls", &ClassicSVfit::setMaxObjFunctionCalls)
         .def("setLikelihoodFileName", &ClassicSVfit::setLikelihoodFileName)
         .def("setTreeFileName", &ClassicSVfit::setTreeFileName)
-        .def("setHistogramAdapter", &ClassicSVfit::setHistogramAdapter)
+        .def("setHistogramAdapter",[](ClassicSVfit &self, classic_svFit::HistogramAdapter* adapter) {
+            self.setHistogramAdapter(adapter);
+        })
+        // .def("setHistogramAdapter",[](ClassicSVfit &self) {
+        //     auto adapter = std::make_unique<classic_svFit::TauTauHistogramAdapter>();
+        //     self.setHistogramAdapter(adapter.release());
+        //     })
         .def("getHistogramAdapter", &ClassicSVfit::getHistogramAdapter, py::return_value_policy::reference)
         .def("prepareIntegrand", &ClassicSVfit::prepareIntegrand)
         .def("prepareLeptonInput", &ClassicSVfit::prepareLeptonInput)
@@ -123,6 +129,7 @@ PYBIND11_MODULE(pybind_wrapper, m) {
         .def("extractUncertainties", &classic_svFit::HistogramAdapter::extractUncertainties)
         .def("extractLmaxima", &classic_svFit::HistogramAdapter::extractLmaxima)
         .def("isValidSolution", &classic_svFit::HistogramAdapter::isValidSolution);
+        
 
     py::class_<classic_svFit::DiTauSystemHistogramAdapter, classic_svFit::HistogramAdapter>(m, "DiTauSystemHistogramAdapter")
         .def(py::init<std::vector<classic_svFit::SVfitQuantity*> const&>())
@@ -140,14 +147,38 @@ PYBIND11_MODULE(pybind_wrapper, m) {
         .def("getMassLmax", &classic_svFit::DiTauSystemHistogramAdapter::getMassLmax)
         .def("getTransverseMass", &classic_svFit::DiTauSystemHistogramAdapter::getTransverseMass)
         .def("getTransverseMassErr", &classic_svFit::DiTauSystemHistogramAdapter::getTransverseMassErr)
+        .def("GetSVfitQuantities", [](classic_svFit::DiTauSystemHistogramAdapter& adapter) {
+        std::vector<const classic_svFit::SVfitQuantity*> svfitQuantities;
+        for (unsigned int i = 0; i < adapter.getNQuantities(); ++i) {
+            svfitQuantities.push_back(adapter.getQuantity(i));
+        }
+        return svfitQuantities;
+         })
         .def("getTransverseMassLmax", &classic_svFit::DiTauSystemHistogramAdapter::getTransverseMassLmax);
 
-    py::class_<classic_svFit::TauTauHistogramAdapter, classic_svFit::DiTauSystemHistogramAdapter>(m, "TauTauHistogramAdapter")
-        .def(py::init<std::vector<classic_svFit::SVfitQuantity*> const&>())
+    py::class_<classic_svFit::TauTauHistogramAdapter, classic_svFit::DiTauSystemHistogramAdapter, std::unique_ptr<classic_svFit::TauTauHistogramAdapter, py::nodelete>>(m, "TauTauHistogramAdapter")
+    // py::class_<classic_svFit::TauTauHistogramAdapter, classic_svFit::DiTauSystemHistogramAdapter>(m, "TauTauHistogramAdapter")
+        .def(py::init<const std::vector<classic_svFit::SVfitQuantity*>&>(), py::arg("quantities") = std::vector<classic_svFit::SVfitQuantity*>())
         .def("GetFittedHiggsLV", &classic_svFit::TauTauHistogramAdapter::GetFittedHiggsLV)
-        .def("GetFittedTau1LV", &classic_svFit::TauTauHistogramAdapter::GetFittedTau1LV)
-        .def("GetFittedTau2LV", &classic_svFit::TauTauHistogramAdapter::GetFittedTau2LV);
+        // .def("GetFittedTau1LV", &classic_svFit::TauTauHistogramAdapter::GetFittedTau1LV) 
+        .def("GetFittedTau1LV", [](classic_svFit::TauTauHistogramAdapter &self) {
+            // Access GetFittedTau1LV()
+            classic_svFit::LorentzVector tau1P4 = self.GetFittedTau1LV();
+            // Convert to Python TLorentzVector object
+            py::object tau1P4_py = py::module::import("ROOT").attr("TLorentzVector")(tau1P4.Px(), tau1P4.Py(), tau1P4.Pz(), tau1P4.E());
+            return tau1P4_py;
+        })
+        .def("GetFittedTau2LV", [](classic_svFit::TauTauHistogramAdapter &self) {
+            // Access GetFittedTau2LV()
+            classic_svFit::LorentzVector tau2P4 = self.GetFittedTau2LV();
+            // Convert to Python TLorentzVector object
+            py::object tau2P4_py = py::module::import("ROOT").attr("TLorentzVector")(tau2P4.Px(), tau2P4.Py(), tau2P4.Pz(), tau2P4.E());
+            return tau2P4_py;
+        });
+        // .def("GetFittedTau2LV", &classic_svFit::TauTauHistogramAdapter::GetFittedTau2LV);
     
+    py::class_<classic_svFit::SVfitQuantity, std::unique_ptr<classic_svFit::SVfitQuantity, py::nodelete>>(m, "SVfitQuantity");
+
 
     py::class_<FastMTT>(m, "FastMTT")
         .def(py::init<>())
